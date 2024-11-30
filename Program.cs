@@ -73,6 +73,55 @@ namespace CheckDrivers
                 "");
             return;
         }
+
+        static void AttemptDownload()
+        {
+
+            string uri = "https://www.loldrivers.io/api/drivers.json";
+            string filePath = "drivers.json";
+
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls
+                                                    | System.Net.SecurityProtocolType.Tls11
+                                                    | System.Net.SecurityProtocolType.Tls12;
+
+            using (System.Net.WebClient wc = new System.Net.WebClient())
+            {
+                // Optional: Set headers
+                // wc.Headers.Add("User-Agent", "Mozilla/5.0 (compatible; AcmeInc/1.0)");
+
+                // Subscribe to the DownloadFileCompleted event
+                wc.DownloadFileCompleted += (sender, e) =>
+                {
+                    if (e.Error != null)
+                    {
+                        Console.WriteLine($"[!] Download failed: {e.Error.Message}");
+                    }
+                    else if (e.Cancelled)
+                    {
+                        Console.WriteLine("[!] Download canceled.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("[+] drivers.json file downloaded successfully.");
+                        Console.WriteLine("Press any key to exit.");
+                        
+                    }
+                };
+
+                try
+                {
+                    // Start the asynchronous download
+                    wc.DownloadFileAsync(new Uri(uri), filePath);
+                    Console.WriteLine("Downloading... Press any key to cancel.");
+                    Console.ReadKey(); // Prevents the application from exiting immediately
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[!] An error occurred: {ex.Message}");
+                }
+            }
+
+        }
         static void Main(string[] args)
         {
 
@@ -120,11 +169,10 @@ namespace CheckDrivers
 
             do
             {
-
                 if (activeGUI)
                 {
 
-                    ResetValues(); // Prevents from other functions being ran again after its been called the first time.
+
                     Console.WriteLine(
                         "\n1. Help\n" +
                         "2. Download drivers.json from loldrivers.io\n" +
@@ -223,22 +271,21 @@ namespace CheckDrivers
 
                         Console.WriteLine(drv + " (" + certname + ")");
                     }
+
+                }
+                if (download)
+                {
+                    AttemptDownload();
                 }
 
                 if (compare)
                 {
                     Console.WriteLine("[-] Check for vuln drivers from loldrivers.io..");
-                    if (download)
-                    {
-                        using (System.Net.WebClient wc = new System.Net.WebClient())
-                        {
-                            string Uri = "https://www.loldrivers.io/api/drivers.json";
-                            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls | System.Net.SecurityProtocolType.Tls11 | System.Net.SecurityProtocolType.Tls12 | System.Net.SecurityProtocolType.Ssl3;
-                            wc.DownloadFile(Uri, "drivers.json");
-                            Console.WriteLine("[+] drivers.json file downloaded");
-                        }
-                    }
 
+                    if (!File.Exists("./drivers.json"))
+                    {
+                        AttemptDownload();
+                    }
 
                     List<JSONDrivers> drvobj = null;
                     try
@@ -454,6 +501,11 @@ namespace CheckDrivers
                     {
                         Console.WriteLine("[+] No EDR driver Found!");
                     }
+                }
+                ResetValues();
+                if(args.Length > 0)
+                {
+                    running = false;
                 }
             } while (running);
 
