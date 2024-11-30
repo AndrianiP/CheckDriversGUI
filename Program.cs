@@ -86,8 +86,6 @@ namespace CheckDrivers
 
             using (System.Net.WebClient wc = new System.Net.WebClient())
             {
-                // Optional: Set headers
-                // wc.Headers.Add("User-Agent", "Mozilla/5.0 (compatible; AcmeInc/1.0)");
 
                 // Subscribe to the DownloadFileCompleted event
                 wc.DownloadFileCompleted += (sender, e) =>
